@@ -1,6 +1,6 @@
 import argparse
 from datetime import datetime
-import requests, json, geocoder
+import requests, json, geocoder, os
 
 #a just for fun command that greets me and gets the weather :)
 
@@ -11,7 +11,7 @@ def get_weather():
 	gets the weather at the stored lat and long, using the Dark Sky API: https://darksky.net/dev
 	"""
 
-	KEY = "b3cd0645a6301cdcdffd485fdc0f524c"
+	KEY = os.environ.get("WEATHER_KEY")
 
 	contents = requests.get(f"https://api.darksky.net/forecast/{KEY}/{lat_long[0]},{lat_long[1]}")
 	data = json.loads(contents.content)
