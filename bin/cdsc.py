@@ -106,11 +106,10 @@ def write_json(my_json, file):
 	file.close()
 
 
-parser = ArgumentParser(description=
-	'''CD Shortcuts: functioanlity to add and remove shortcuts to quickly reach often used directories
-Examples: \tcdsc <shortcut> cd into file linked to shortcut
-\t\tcdsc -n <direcetory>  <schortcut> links shortcut to directory
-\t\tcdsc -u <shortcut> unlinks the shortcut''', formatter_class=RawTextHelpFormatter)
+parser = ArgumentParser(description='''CD Shortcuts: functioanlity to add and remove shortcuts to quickly reach often used directories
+Examples: \tcdsc [shortcut] cd into file linked to shortcut
+\t\tcdsc -n [directory] [shortcut] links shortcut to directory
+\t\tcdsc -u [shortcut] unlinks the shortcut''', formatter_class=RawTextHelpFormatter)
 parser.add_argument('shortcut', nargs='?', help='the string to be used as a shortcut to the directory')
 parser.add_argument('-n', type=str, dest='directory', help='create a new link between the shortcut string and specified directory', metavar=("directory"))
 parser.add_argument('-u', dest='unlink', action='store_true', help='unlink the specified shortcut')

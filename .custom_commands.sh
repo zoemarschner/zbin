@@ -9,8 +9,12 @@ function hi() {
 
 #cd short cuts, to get to folders I am working on a lot 
 function cdsc() {
-	command=$(python3 ~/bin/cdsc.py "$@")
-	eval $command
+	if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+		python3 ~/bin/cdsc.py "$@"
+	else
+		command=$(python3 ~/bin/cdsc.py "$@")
+		eval $command
+	fi
 }
 
 #---SIMPLE SHORTCUTS---#
