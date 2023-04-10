@@ -10,7 +10,7 @@ Implmented as a json file (.cdsc.json) linking shortcut strings to file paths
 Outputs a bash command to stdout, which is evaluated by calling function
 """
 
-FILE_PATH = sys.path[0] + "/.cdsc.json"
+FILE_PATH = "/Users/zoe/bin/.cdsc.json"
 
 def get_sc_file(write=False):
 	"""
@@ -37,8 +37,7 @@ def add_sc(shortcut, directory):
 	"""
 
 	sc_file, sc_dir = get_sc_file(write=True)
-	sc_dir[shortcut] = directory
-
+	sc_dir[shortcut] =  os.path.abspath(directory)
 	write_json(sc_dir, sc_file)
 
 def get_sc(shortcut):
@@ -112,6 +111,7 @@ Examples: \tcdsc [shortcut] cd into file linked to shortcut
 \t\tcdsc -u [shortcut] unlinks the shortcut''', formatter_class=RawTextHelpFormatter)
 parser.add_argument('shortcut', nargs='?', help='the string to be used as a shortcut to the directory')
 parser.add_argument('-n', type=str, dest='directory', help='create a new link between the shortcut string and specified directory', metavar=("directory"))
+parser.add_argument('-nh', dest='new_here', action='store_true', help='creates a new link between the shortcut string and the current directory')
 parser.add_argument('-u', dest='unlink', action='store_true', help='unlink the specified shortcut')
 parser.add_argument('-l', dest='list', action='store_true', help='lists currently linked shortcuts')
 
@@ -125,9 +125,9 @@ else:
 	if args.shortcut is None:
 		parser.error("No shortcut defined")
 	else:
-		if args.directory is not None:
+		if args.directory is not None or args.new_here:
 			# case where we are adding shortcut
-			add_sc(args.shortcut, args.directory)
+			add_sc(args.shortcut, args.directory if args.directory is not None else '.')
 			print(f"echo 'Succesfully linked shortcut \"{args.shortcut}\".'")
 		elif args.unlink:
 			# case where we are unlinking

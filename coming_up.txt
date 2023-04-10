@@ -1,0 +1,4 @@
+make rename script that takes new naming scheme and list of files and looks for consistent naming pattern in them and then renames them from template
+inspired by my need to rename psets forever
+Or just rename script that takes one template to another
+eg. Homework_{int}.pdf -> pset_{int}.pdf

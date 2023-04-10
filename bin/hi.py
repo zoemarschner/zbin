@@ -6,41 +6,47 @@ import requests, json, geocoder, os
 
 lat_long = []
 
-def get_weather():
+def get_weather(units_metric=False):
 	"""
 	gets the weather at the stored lat and long, using the Dark Sky API: https://darksky.net/dev
 	"""
 
-	KEY = os.environ.get("WEATHER_KEY")
+	KEY = os.environ.get("OPEN_WEATHER_KEY")
 
-	contents = requests.get(f"https://api.darksky.net/forecast/{KEY}/{lat_long[0]},{lat_long[1]}")
+	contents = requests.get(f"https://api.openweathermap.org/data/2.5/weather?lat={lat_long[0]}&lon={lat_long[1]}&appid={KEY}")
 	data = json.loads(contents.content)
-	icon = data["currently"].get('icon', None)
+	icon = data["weather"][0].get('icon', None)
 	iconStr = "" if icon is None else " and "
-	if icon == "clear-day":
+	if icon == "01d":
 		iconStr += "☀️"
-	elif icon == "clear-night":
+	elif icon == "01n":
 		iconStr += "🌙"
-	elif icon == "rain":
-		iconStr += "🌧️"
-	elif icon == "snow":
-		iconStr += "❄️"
-	elif icon == "sleet":
-		iconStr += "🌨️"
-	elif icon == "wind":
-		iconStr += "🌪️"
-	elif icon == "fog":
-		iconStr += "☁️"
-	elif icon == "cloudy":
-		iconStr += "☁️"
-	elif icon == "partly-cloudy-day":
+	elif icon in ["02d", "02n"]:
 		iconStr += "⛅"
-	elif icon == "partly-cloudy-night":
-		iconStr += "🌙"
+	elif icon in ["03d", "03n", "04d", "04n"]:
+		iconStr += "☁️"
+	elif icon in ["09d", "09n"] :
+		iconStr += "🌧️"
+	elif icon in ["10d", "10n"]:
+		iconStr += "🌦"
+	elif icon in ["11d", "11n"]:
+		iconStr += "🌩"
+	elif icon in ["13d", "13n"]:
+		iconStr += "❄️"
+	elif icon in ["50d", "50n"]:
+		iconStr += "🌫"
 
-	weekStr = f"This week, expect {data['daily']['summary'][0].lower() + data['daily']['summary'][1:]}"
-	dayStr = f"Today, expect {data['hourly']['summary'][0].lower() + data['hourly']['summary'][1:]}"
-	return [f"It's {data['currently']['temperature']}°F" + iconStr, dayStr, weekStr]
+	conv_f = kelvin_to_celsius if units_metric else kelvin_to_farenheit
+	units = "C" if units_metric else "F"
+
+	dayStr = f"Today, expect {data['weather'][0]['description'].lower()} with a high of {conv_f(data['main']['temp_max']):.1f}°{units} and low of {conv_f(data['main']['temp_min']):.1f}°{units}."
+	return [f"It's {conv_f(data['main']['temp']):.1f}°{units}" + iconStr, dayStr]
+
+def kelvin_to_farenheit(temp):
+	return (temp - 273.15) * 9/5 + 32
+
+def kelvin_to_celsius(temp):
+	return (temp - 273.15)
 
 def get_location():
 	"""
@@ -80,6 +86,5 @@ if args.long:
 	print(location_data)
 	print(weather_data[0])
 	print(weather_data[1])
-	print(weather_data[2])
 else:
 	print(f"{greeting} {weather_data[0]}")
