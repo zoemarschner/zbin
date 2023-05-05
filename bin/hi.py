@@ -43,7 +43,7 @@ def get_weather(units_metric=False):
 	return [f"It's {conv_f(data['main']['temp']):.1f}°{units}" + iconStr, dayStr]
 
 def kelvin_to_farenheit(temp):
-	return (temp - 273.15) * 9/5 + 32
+	return kelvin_to_celsius(temp) * 9/5 + 32
 
 def kelvin_to_celsius(temp):
 	return (temp - 273.15)
