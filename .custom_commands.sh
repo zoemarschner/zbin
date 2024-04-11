@@ -122,11 +122,88 @@ function makegif() {
 	convert -delay $1 -loop 0 -dispose previous *.png gif.gif
 }
 
+# crop an image or list of images by specified number of pixels in each dimension
+function zcrop() {
+	usage="Usage: zcrop [-f] [-h] [-l lpix] [-r rpix] [-u upix] [-d dpix] [file glob] -- crop an image or list of images, -f overrides orignal image (otherwise 'cropped_' is added to filename), -l,-r,-u,-d set how much to crop in (l)eft, (r)ight, (u)p, and (d)own directions"
+	opt_f=false
+	opt_l=0
+	opt_r=0
+	opt_u=0
+	opt_d=0
 
-# crop an image saved from polyscope, with cropping parameters tailored to cut out white space 
+	local OPTIND opt f h l r u d
+
+	while getopts fhl:r:u:d: opt; do
+    case ${opt} in
+      f) opt_f=true ;;
+			h) opt_h=
+				echo "$usage"
+       	return 
+       	;;
+      l) opt_l=${OPTARG} ;;
+      r) opt_r=${OPTARG} ;;
+			u) opt_u=${OPTARG} ;;
+			d) opt_d=${OPTARG} ;;
+      *) 
+				echo "$usage"
+       	return 
+       	;;
+    esac
+	done
+
+	shift "$(( OPTIND - 1 ))"
+
+	width=$(identify -format '%w' $1)
+	height=$(identify -format '%h' $1)
+	
+	res_width=$(($width - $opt_l - $opt_r))
+	res_height=$(($height - $opt_u - $opt_d))
+
+	"$opt_f" && filestr="" || filestr="cropped_"
+
+	# loop through files that don't begin with cropped
+	for file in "$@"; do
+		if [[ $file != cropped* ]]; then 
+			convert ${file} -crop ${res_width}x${res_height}+${opt_l}+${opt_u} ${filestr}${file}
+		fi
+	done
+}
+
+
+# crop an image saved from polyscope, with SET cropping parameters tailored to cut out white space 
 # generated from the typical un-modified polyscope camera. input image should be 3024x1832
 function pscrop() {
-	convert $1 -crop 1524x1382+750+450 cropped_$1
+	usage="Usage: pscrop [-f] [-h] [-x nx] [-y ny] [filename] -- crop an image to cut out whitespace in polyscope screenshots, -f overrides orignal image, nx and ny offset the crop window"
+	opt_f=false
+	opt_x=0
+	opt_y=0
+
+	local OPTIND opt f h x y
+
+	while getopts fhx:y: opt; do
+    case ${opt} in
+      f) opt_f=true ;;
+			h) opt_h=
+				echo "$usage"
+       	return 
+       	;;
+      x) opt_x=${OPTARG} ;;
+      y) opt_y=${OPTARG} ;;
+      *) 
+				echo "$usage"
+       	return 
+       	;;
+    esac
+	done
+
+	shift "$(( OPTIND - 1 ))"
+
+	x_mv=$(($opt_x + 750))
+	y_mv=$(($opt_y + 450))
+
+	"$opt_f"  && filestr="" || filestr="cropped_"
+
+	convert $1 -crop 1524x1382+${x_mv}+${y_mv} ${filestr}$1
 
 }
 
@@ -134,7 +211,7 @@ function pscrop() {
 function pscropall() {
 	for file in *.png; do 
     if [[ $file != cropped* ]]; then 
-      pscrop $file
+      pscrop "$@" $file 
     fi 
 	done
 }
@@ -159,7 +236,7 @@ function ffcol() {
 
 	echo $color
 
-	ffmpeg -f lavfi -i color=c=#${color}:s=${size} -framerate ${2:-20} -pattern_type glob -i '*.png' -filter_complex "overlay=shortest=1" -pix_fmt yuv420p out2.mp4
+	ffmpeg -f lavfi -i color=c=#${color}:s=${size} -framerate ${2:-20} -pattern_type glob -i '*.png' -filter_complex "overlay=shortest=1" -pix_fmt yuv420p out.mp4
 }	
 
 # makes a .mov video out of a sequence of pngs in the current folder with a transparent background
