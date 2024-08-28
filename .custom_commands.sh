@@ -8,7 +8,7 @@ alias bpy='blender --background --python'
 
 # test function!
 function hi() {
-  python3 ~/bin/hi.py "$@"
+	python3 ~/bin/hi.py "$@"
 }
 
 #cd short cuts, to get to folders I am working on a lot 
@@ -24,11 +24,10 @@ function cdsc() {
 # set the week strings as enviroment variable, so that it can be referenced in code
 # for example, for labelling folders of research pictures
 # the format is WKSTR_[day of week symobl] = `[month][day]_[yr]` 
-# the week "starts" at the next day--so if it is Tuesday 
+# the week "starts" at the next day
 function wkstr() {
 	eval $(python3 ~/bin/wkstr.py "$@")
 }
-
 
 #---SIMPLE SHORTCUTS---#
 
@@ -124,49 +123,84 @@ function makegif() {
 
 # crop an image or list of images by specified number of pixels in each dimension
 function zcrop() {
-	usage="Usage: zcrop [-f] [-h] [-l lpix] [-r rpix] [-u upix] [-d dpix] [file glob] -- crop an image or list of images, -f overrides orignal image (otherwise 'cropped_' is added to filename), -l,-r,-u,-d set how much to crop in (l)eft, (r)ight, (u)p, and (d)own directions"
+
+	USAGE=$(cat <<-END
+		Usage: zcrop [-f] [-h] [-o] [-l lpix] [-r rpix] [-u upix] [-d dpix] [file glob] -- crop an image or list of images
+
+		Options:
+		  -l,-r,-u,-d set how much to crop in (l)eft, (r)ight, (u)p, and (d)own directions
+		  -f overrides orignal image (otherwise 'cropped_' is added to filename)
+		  -h shows this message
+		  -o forces all images to be output as RGBA (as opposed to pallete + alpha) (standardizes images but may lead to larger files)
+	END
+	)
+
 	opt_f=false
+	opt_o=false
+
 	opt_l=0
 	opt_r=0
 	opt_u=0
 	opt_d=0
 
-	local OPTIND opt f h l r u d
+	local OPTIND opt f h l r u d o
 
-	while getopts fhl:r:u:d: opt; do
-    case ${opt} in
-      f) opt_f=true ;;
+	while getopts fhol:r:u:d: opt; do
+		case ${opt} in
+			f) opt_f=true ;;
 			h) opt_h=
-				echo "$usage"
-       	return 
-       	;;
-      l) opt_l=${OPTARG} ;;
-      r) opt_r=${OPTARG} ;;
+				echo "$USAGE"
+				return 
+				;;
+			l) opt_l=${OPTARG} ;;
+			r) opt_r=${OPTARG} ;;
 			u) opt_u=${OPTARG} ;;
 			d) opt_d=${OPTARG} ;;
-      *) 
-				echo "$usage"
-       	return 
-       	;;
-    esac
+			o) opt_o=true ;;
+			*) 
+				echo "$USAGE"
+				return 
+				;;
+		esac
 	done
 
 	shift "$(( OPTIND - 1 ))"
-
-	width=$(identify -format '%w' $1)
-	height=$(identify -format '%h' $1)
-	
-	res_width=$(($width - $opt_l - $opt_r))
-	res_height=$(($height - $opt_u - $opt_d))
-
 	"$opt_f" && filestr="" || filestr="cropped_"
+
+	img_prefix=""
+	if $opt_o; then
+		img_prefix="PNG32:"
+	fi
+
 
 	# loop through files that don't begin with cropped
 	for file in "$@"; do
 		if [[ $file != cropped* ]]; then 
-			convert ${file} -crop ${res_width}x${res_height}+${opt_l}+${opt_u} ${filestr}${file}
+			width=$(identify -format '%w' $file)
+			height=$(identify -format '%h' $file)
+			
+			res_width=$(($width - $opt_l - $opt_r))
+			res_height=$(($height - $opt_u - $opt_d))
+
+			magick ${file} -crop ${res_width}x${res_height}+${opt_l}+${opt_u} ${img_prefix}${filestr}${file}
 		fi
 	done
+}
+
+# shortcuts for zcrop targeted at results screenshotted from polyscope with frequently used meshes 
+function zcropshape() {
+	usage="Usage: zcropshape [shape] [zcrop arguments] -- currently supported shapes: bunny, sphere, plane, disk"
+
+	case $1 in 
+		bunny) zcrop -l 829 -u 300 -r 778 -d 132 ${@:2};;
+		sphere) zcrop -l 567 -r 567 ${@:2};;
+		plane) zcrop -l 650 -r 650 -u 300 -d 300 ${@:2};;
+		disk) zcrop -l 450 -r 450 -u 100 -d 100 ${@:2};;
+		*) 
+			echo "$usage"
+			return  
+			;;
+	esac
 }
 
 
@@ -181,19 +215,19 @@ function pscrop() {
 	local OPTIND opt f h x y
 
 	while getopts fhx:y: opt; do
-    case ${opt} in
-      f) opt_f=true ;;
+		case ${opt} in
+			f) opt_f=true ;;
 			h) opt_h=
 				echo "$usage"
-       	return 
-       	;;
-      x) opt_x=${OPTARG} ;;
-      y) opt_y=${OPTARG} ;;
-      *) 
+				return 
+				;;
+			x) opt_x=${OPTARG} ;;
+			y) opt_y=${OPTARG} ;;
+			*) 
 				echo "$usage"
-       	return 
-       	;;
-    esac
+				return 
+				;;
+		esac
 	done
 
 	shift "$(( OPTIND - 1 ))"
@@ -203,16 +237,16 @@ function pscrop() {
 
 	"$opt_f"  && filestr="" || filestr="cropped_"
 
-	convert $1 -crop 1524x1382+${x_mv}+${y_mv} ${filestr}$1
+	magick $1 -crop 1524x1382+${x_mv}+${y_mv} ${filestr}$1
 
 }
 
 # crops all files in the folder that do not begin with "crop" using pscrop  
 function pscropall() {
 	for file in *.png; do 
-    if [[ $file != cropped* ]]; then 
-      pscrop "$@" $file 
-    fi 
+		if [[ $file != cropped* ]]; then 
+			pscrop "$@" $file 
+		fi 
 	done
 }
 
