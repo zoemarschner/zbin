@@ -189,13 +189,16 @@ function zcrop() {
 
 # shortcuts for zcrop targeted at results screenshotted from polyscope with frequently used meshes 
 function zcropshape() {
-	usage="Usage: zcropshape [shape] [zcrop arguments] -- currently supported shapes: bunny, sphere, plane, disk"
+	usage="Usage: zcropshape [shape] [zcrop arguments] -- currently supported shapes: bunny, sphere, spher_tight, plane, disk, disk_sdf, ajax"
 
 	case $1 in 
-		bunny) zcrop -l 829 -u 300 -r 778 -d 132 ${@:2};;
-		sphere) zcrop -l 567 -r 567 ${@:2};;
+		bunny) zcrop -l 800 -r 850 -u 300 -d 150 ${@:2};;#-l 550 -u 325 -r 620 -d 175 ${@:2};;
+		sphere) zcrop -l 350 -r 350 ${@:2};;
+		sphere_tight) zcrop -l 700 -r 700  -u 100 -d 100  ${@:2};;
 		plane) zcrop -l 650 -r 650 -u 300 -d 300 ${@:2};;
-		disk) zcrop -l 450 -r 450 -u 100 -d 100 ${@:2};;
+		disk) zcrop -l 610 -r 610 -d 100 -u 100 ${@:2};;
+		disk_sdf) zcrop -l 600 -r 600 ${@:2};;
+		ajax) zcrop -l 1010 -r 1030 -u 200 -d 120 ${@:2};;
 		*) 
 			echo "$usage"
 			return  
@@ -267,8 +270,6 @@ function ffcol() {
 	elif [[ $1 == obs ]]; then
 		color=151515 
 	fi
-
-	echo $color
 
 	ffmpeg -f lavfi -i color=c=#${color}:s=${size} -framerate ${2:-20} -pattern_type glob -i '*.png' -filter_complex "overlay=shortest=1" -pix_fmt yuv420p out.mp4
 }	

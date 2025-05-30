@@ -1,6 +1,8 @@
 import argparse
 from datetime import datetime
-import requests, json, geocoder, os
+import requests, json, os
+
+import geolocate
 
 #a just for fun command that greets me and gets the weather :)
 
@@ -53,7 +55,7 @@ def get_location():
 	uses geocoder package to get latitude and longitude from ip adress
 	"""
 	global lat_long
-	loc = geocoder.ip('me')
+	loc = geolocate.ip('me')
 	lat_long = loc.latlng
 	return f"You're in {loc.address} and your ISP is {loc.org}"
 
